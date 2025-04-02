@@ -99,7 +99,10 @@ spec:
 {{- if .Values.statefulSet }}
   podManagementPolicy: {{ .Values.podManagementPolicy | default "OrderedReady" }}
 {{- end }}
-  replicas: {{ if .isCanary }}{{ .Values.canary.replicaCount | default 1 }}{{ else }}{{ .Values.replicaCount }}{{ end }}
+{{- $replicas := (ternary .Values.canary.replicaCount .Values.replicaCount .isCanary) }}
+{{- if $replicas }}
+  replicas: {{ $replicas }}
+{{- end }}
 {{- if .Values.deploymentStrategy.enabled }}
   strategy:
     type: {{ .Values.deploymentStrategy.type }}
