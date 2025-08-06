@@ -851,18 +851,21 @@ fullnameOverride: ""
 # google specifies Google (GKE) specific configuration to be set via arguments/env. variables
 #----------------------------------------------------------------------------------------------------------------------
 google:
-  # managedCertificate can be used to provision a Google Managed Certificate. Associate the ManagedCertificate object
+  # managedCertificate can be used to provision Google Managed Certificates. Associate the ManagedCertificate objects
   # to an Ingress by adding an annotation 'networking.gke.io/managed-certificates' to the Ingress.
   #
   # The expected keys are:
-  #   - enabled      (bool)   (required) : Whether or not the ManagedCertificate resource should be created.
-  #   - domainName   (string)            : Specifies the domain that the SSL certificate will be created for
+  #   - enabled      (bool)   (required) : Whether or not the ManagedCertificate resource(s) should be created.
+  #   - domainName   (string)            : Specifies a single domain that the SSL certificate will be created for
+  #                                        (LEGACY: Use certificates for multiple domains)
   #   - name         (string)            : Specifies the name of the SSL certificate that you reference in Ingress with
   #                                        networking.gke.io/managed-certificates: name
+  #   - certificates (list)              : Specifies multiple certificates for different domains
+  #                                        (RECOMMENDED: Supports multiple certificates with different domains)
   #
-  # The following example specifies a ManagedCertificate with a domain name 'api.acme.com' and name 'acme-cert':
+  # The following examples specify ManagedCertificates:
   #
-  # EXAMPLE:
+  # EXAMPLE 1 - Single certificate (legacy way):
   #
   # google:
   #   managedCertificate:
@@ -870,7 +873,25 @@ google:
   #     name: acme-cert
   #     domainName: api.acme.com
   #
+  # EXAMPLE 2 - Multiple certificates (recommended way):
+  #
+  # google:
+  #   managedCertificate:
+  #     enabled: true
+  #     certificates:
+  #       - name: api-cert
+  #         domainName: api.acme.com
+  #       - name: www-cert
+  #         domainName: www.acme.com
+  #       - name: app-cert
+  #         domainName: app.acme.com
+  #
   # NOTE: if you enable managedCertificate, then Ingress must also be enabled.
   # Use a Google Managed Certificate. By default, turn off.
   managedCertificate:
     enabled: false
+    # Legacy single certificate configuration
+    domainName: ""
+    name: ""
+    # Multiple certificates configuration (recommended)
+    certificates: []
