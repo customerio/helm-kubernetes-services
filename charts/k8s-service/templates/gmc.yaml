@@ -7,8 +7,24 @@ that will provision a Google managed SSL certificate.
 We declare some variables defined on the Values. These are reused in `with` and `range` blocks where the scoped variable
 (`.`) is rebound within the block.
 */ -}}
-{{- $domainName := .Values.google.managedCertificate.domainName -}}
 {{- $certificateName := .Values.google.managedCertificate.name -}}
+{{- $domainName := .Values.google.managedCertificate.domainName -}}
+{{- $domainNames := .Values.google.managedCertificate.domainNames -}}
+
+{{- /*
+Determine which domains to use:
+1. If domainNames is provided and not empty, use it (new way)
+2. If domainName is provided and not empty, use it (legacy way)
+3. Otherwise, don't create the certificate
+*/ -}}
+{{- $domainsToUse := list -}}
+{{- if and $domainNames (gt (len $domainNames) 0) -}}
+  {{- $domainsToUse = $domainNames -}}
+{{- else if and $domainName (ne $domainName "") -}}
+  {{- $domainsToUse = list $domainName -}}
+{{- end -}}
+
+{{- if gt (len $domainsToUse) 0 -}}
 apiVersion: networking.gke.io/v1beta1
 kind: ManagedCertificate
 metadata:
@@ -23,5 +39,8 @@ metadata:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
 spec:
   domains:
-    - {{ $domainName }}
+{{- range $domainsToUse }}
+    - {{ . }}
+{{- end }}
+{{- end }}
 {{- end }}

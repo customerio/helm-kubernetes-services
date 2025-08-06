@@ -555,6 +555,73 @@ func TestK8SServiceManagedCertDomainNameAndName(t *testing.T) {
 	assert.Equal(t, certName, "acme-cert")
 }
 
+// Test rendering Managed Certificate with multiple domains using domainNames
+func TestK8SServiceManagedCertMultipleDomainsAndName(t *testing.T) {
+	t.Parallel()
+
+	cert := renderK8SServiceManagedCertificateWithSetValues(
+		t,
+		map[string]string{
+			"google.managedCertificate.enabled":        "true",
+			"google.managedCertificate.name":           "acme-cert",
+			"google.managedCertificate.domainNames[0]": "api.acme.io",
+			"google.managedCertificate.domainNames[1]": "www.acme.io",
+			"google.managedCertificate.domainNames[2]": "app.acme.io",
+		},
+	)
+
+	domains := cert.Spec.Domains
+	certName := cert.ObjectMeta.Name
+	assert.Equal(t, len(domains), 3)
+	assert.Equal(t, domains[0], "api.acme.io")
+	assert.Equal(t, domains[1], "www.acme.io")
+	assert.Equal(t, domains[2], "app.acme.io")
+	assert.Equal(t, certName, "acme-cert")
+}
+
+// Test rendering Managed Certificate with single domain using domainNames (new way)
+func TestK8SServiceManagedCertSingleDomainWithDomainNames(t *testing.T) {
+	t.Parallel()
+
+	cert := renderK8SServiceManagedCertificateWithSetValues(
+		t,
+		map[string]string{
+			"google.managedCertificate.enabled":        "true",
+			"google.managedCertificate.name":           "acme-cert",
+			"google.managedCertificate.domainNames[0]": "api.acme.io",
+		},
+	)
+
+	domains := cert.Spec.Domains
+	certName := cert.ObjectMeta.Name
+	assert.Equal(t, len(domains), 1)
+	assert.Equal(t, domains[0], "api.acme.io")
+	assert.Equal(t, certName, "acme-cert")
+}
+
+// Test that domainNames takes precedence over domainName when both are provided
+func TestK8SServiceManagedCertDomainNamesTakesPrecedence(t *testing.T) {
+	t.Parallel()
+
+	cert := renderK8SServiceManagedCertificateWithSetValues(
+		t,
+		map[string]string{
+			"google.managedCertificate.enabled":        "true",
+			"google.managedCertificate.name":           "acme-cert",
+			"google.managedCertificate.domainName":     "legacy.acme.io",
+			"google.managedCertificate.domainNames[0]": "new.acme.io",
+			"google.managedCertificate.domainNames[1]": "www.acme.io",
+		},
+	)
+
+	domains := cert.Spec.Domains
+	certName := cert.ObjectMeta.Name
+	assert.Equal(t, len(domains), 2)
+	assert.Equal(t, domains[0], "new.acme.io")
+	assert.Equal(t, domains[1], "www.acme.io")
+	assert.Equal(t, certName, "acme-cert")
+}
+
 // Test that setting ingress.enabled = false will cause the helm template to not render the ManagedCertificate resource
 func TestK8SServiceManagedCertificateDefaultsDoesNotCreateManagedCertificate(t *testing.T) {
 	t.Parallel()

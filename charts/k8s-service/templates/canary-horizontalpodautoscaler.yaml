@@ -1,0 +1,35 @@
+{{- if and .Values.canary.enabled .Values.canary.horizontalPodAutoscaler.enabled }}
+apiVersion: {{ include "gruntwork.horizontalPodAutoscaler.apiVersion" . }}
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "k8s-service.fullname" . }}-canary
+  namespace: {{ $.Release.Namespace }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: {{ if not .Values.statefulSet }}Deployment{{ else }}StatefulSet{{ end }}
+    name: {{ include "k8s-service.fullname" . }}-canary
+  minReplicas: {{ .Values.canary.horizontalPodAutoscaler.minReplicas }}
+  maxReplicas: {{ .Values.canary.horizontalPodAutoscaler.maxReplicas }}
+  metrics:
+  {{ if .Values.canary.horizontalPodAutoscaler.avgCpuUtilization }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.canary.horizontalPodAutoscaler.avgCpuUtilization }}
+  {{- end }}
+  {{ if .Values.canary.horizontalPodAutoscaler.avgMemoryUtilization }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.canary.horizontalPodAutoscaler.avgMemoryUtilization }}
+  {{- end }}
+  {{- if .Values.canary.horizontalPodAutoscaler.behavior }}
+  behavior:
+{{ tpl (toYaml .Values.canary.horizontalPodAutoscaler.behavior) $ | indent 4 }}
+  {{- end }}
+{{- end }} 

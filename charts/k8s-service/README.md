@@ -47,7 +47,7 @@ The following resources will be deployed with this Helm Chart, depending on whic
                          node maintenance). Created if you specify a non-zero value for the `minPodsAvailable` input
                          value.
 - `ManagedCertificate`: The `ManagedCertificate` is a [GCP](https://cloud.google.com/) -specific resource that creates a Google Managed SSL certificate. Google-managed SSL certificates are provisioned, renewed, and managed for your domain names. Read more about Google-managed SSL certificates [here](https://cloud.google.com/load-balancing/docs/ssl-certificates#managed-certs). Created only if you configure the `google.managedCertificate` input (and set
-                         `google.managedCertificate.enabled = true` and `google.managedCertificate.domainName = your.domain.name`).
+                         `google.managedCertificate.enabled = true` and either `google.managedCertificate.domainName = your.domain.name` or `google.managedCertificate.domainNames = [your.domains]`).
 
 back to [root README](/README.adoc#core-concepts)
 

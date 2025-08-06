@@ -17,7 +17,7 @@
 #                                      E.g `nginx` ; `gcr.io/kubernetes-helm/tiller`
 #   - tag        (string) (required) : The tag of the image (e.g `latest`) that should be used. We recommend using a
 #                                      fixed tag or the SHA of the image. Avoid using the tags `latest`, `head`,
-#                                      `canary`, or other tags that are designed to be “floating”.
+#                                      `canary`, or other tags that are designed to be "floating".
 #   - pullPolicy (string)            : The image pull policy to employ. Determines when the image will be pulled in. See
 #                                      the official Kubernetes docs for more info. If undefined, this will default to
 #                                      `IfNotPresent`.
@@ -272,6 +272,7 @@ initContainers: {}
 #   - containerImage (map)  (required) : A map that specifies the application container and tag to be managed by the canary deployment.
 #                                        This has the same structure as containerImage.
 #   - replicaCount   (int)             : The number of pods that should be managed by the canary deployment. Defaults to 1 if unset.
+#   - horizontalPodAutoscaler (map)    : Configuration for the Horizontal Pod Autoscaler for the canary deployment
 #
 # The following example specifies a simple canary deployment:
 #
@@ -284,7 +285,20 @@ initContainers: {}
 #     repository: nginx
 #     tag: 1.16.0
 #     pullPolicy: IfNotPresent
-canary: {}
+canary:
+  enabled: false
+  replicaCount: 1
+  containerImage:
+    repository: ""
+    tag: ""
+    pullPolicy: IfNotPresent
+  horizontalPodAutoscaler:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 10
+    avgCpuUtilization: null
+    avgMemoryUtilization: null
+    behavior: null
 
 # replicaCount can be used to configure the number of replica pods that should be deployed and maintained at any given
 # point in time. For example, setting to 3 will signal Kubernetes (via the Deployment contoller) to maintain 3 pods.
@@ -856,13 +870,16 @@ google:
   #
   # The expected keys are:
   #   - enabled      (bool)   (required) : Whether or not the ManagedCertificate resource should be created.
-  #   - domainName   (string)            : Specifies the domain that the SSL certificate will be created for
+  #   - domainName   (string)            : Specifies a single domain that the SSL certificate will be created for
+  #                                        (DEPRECATED: Use domainNames for multiple domains or single domain)
+  #   - domainNames  (list)              : Specifies multiple domains that the SSL certificate will be created for
+  #                                        (RECOMMENDED: Supports both single and multiple domains)
   #   - name         (string)            : Specifies the name of the SSL certificate that you reference in Ingress with
   #                                        networking.gke.io/managed-certificates: name
   #
-  # The following example specifies a ManagedCertificate with a domain name 'api.acme.com' and name 'acme-cert':
+  # The following examples specify ManagedCertificates:
   #
-  # EXAMPLE:
+  # EXAMPLE 1 - Single domain (legacy way):
   #
   # google:
   #   managedCertificate:
@@ -870,7 +887,31 @@ google:
   #     name: acme-cert
   #     domainName: api.acme.com
   #
+  # EXAMPLE 2 - Single domain (recommended way):
+  #
+  # google:
+  #   managedCertificate:
+  #     enabled: true
+  #     name: acme-cert
+  #     domainNames:
+  #       - api.acme.com
+  #
+  # EXAMPLE 3 - Multiple domains:
+  #
+  # google:
+  #   managedCertificate:
+  #     enabled: true
+  #     name: acme-cert
+  #     domainNames:
+  #       - api.acme.com
+  #       - www.acme.com
+  #       - app.acme.com
+  #
   # NOTE: if you enable managedCertificate, then Ingress must also be enabled.
   # Use a Google Managed Certificate. By default, turn off.
   managedCertificate:
     enabled: false
+    # domainName is deprecated - use domainNames instead for better flexibility
+    domainName: ""
+    # domainNames supports both single and multiple domains
+    domainNames: []
