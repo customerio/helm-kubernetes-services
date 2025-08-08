@@ -1,0 +1,45 @@
+# Example values for multiple certificates with Google Managed Certificates
+# This demonstrates the new certificates array functionality while maintaining backwards compatibility
+
+# Basic application configuration
+applicationName: "multi-cert-app"
+containerImage:
+  repository: "nginx"
+  tag: "latest"
+
+# Service configuration
+service:
+  enabled: true
+  type: NodePort
+  ports:
+    app:
+      port: 80
+      targetPort: 80
+      protocol: TCP
+
+# Ingress configuration
+ingress:
+  enabled: true
+  path: /
+  servicePort: 80
+  hosts:
+    - "api.example.com"
+    - "www.example.com"
+    - "app.example.com"
+
+# Google Managed Certificates with multiple certificates
+google:
+  managedCertificate:
+    enabled: true
+    # Option 1: Multiple certificates (recommended)
+    certificates:
+      - name: "api-cert"
+        domainName: "api.example.com"
+      - name: "www-cert"
+        domainName: "www.example.com"
+      - name: "app-cert"
+        domainName: "app.example.com"
+    
+    # Option 2: Legacy single certificate (still works for backwards compatibility)
+    # domainName: "api.example.com"
+    # name: "legacy-cert" 
